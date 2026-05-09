@@ -1,0 +1,204 @@
+Word file:
+
+
+
+
+
+
+
+
+
+
+
+
+
+Policy file:
+Loan Approval Policy (Sample Automated Decision Policy) 
+1. Purpose 
+This policy defines a standardized framework for evaluating incoming loan applications using 
+automated decision rules based on: 
+• Applicant credit score  
+• Verified income / repayment affordability  
+• Requested loan amount  
+The objective is to consistently recommend whether an application should be: 
+• Approved  
+• Rejected  
+• Flagged for Manual Review  
+This is a sample policy for decision automation and should be adapted to the lender’s regulatory, 
+risk, and business requirements. 
+ 
+2. Scope 
+This policy applies to all retail unsecured loan applications submitted through digital or assisted 
+channels. 
+This policy does not replace: 
+• KYC verification  
+• Fraud screening  
+• Document verification  
+• Regulatory compliance checks  
+• Sanctions / AML checks  
+• Final underwriter discretion  
+ 
+3. Input Parameters 
+3.1 Credit Score 
+Credit score is used as an indicator of repayment history and creditworthiness. 
+Accepted source: 
+• Bureau credit report / credit scoring agency  
+Required field: 
+• Numeric credit score  
+ 
+3.2 Verified Income 
+Applicant income must be verified through approved documentation. 
+Accepted evidence: 
+• Salary slips  
+• Bank statements  
+• Income tax returns  
+• Employer verification  
+• Business financials (for self-employed applicants)  
+Required field: 
+• Monthly verified income  
+ 
+3.3 Requested Loan Amount 
+The total loan amount requested by the applicant. 
+Required field: 
+• Requested principal amount  
+ 
+4. Decision Criteria 
+Parameter Approve Manual Review Reject 
+Credit Score ≥ 750 650–749 < 650 
+EMI / Monthly Income 
+Ratio ≤ 35% 35%–50% > 50% 
+Loan Amount vs Income ≤ 12x monthly 
+income 
+10x–15x with 
+justification 
+Unsupported / 
+excessive 
+ 
+5. Decision Logic 
+5.1 Approve 
+Application may be automatically approved when ALL of the following are true: 
+• Credit score ≥ 750  
+• EMI burden ≤ 35% of verified monthly income  
+• Requested loan amount within acceptable threshold  
+• Income successfully verified  
+• No fraud indicators detected  
+• KYC completed successfully  
+• Compliance checks passed  
+System Decision: APPROVE 
+ 
+5.2 Reject 
+Application may be automatically rejected when ANY of the following conditions are met: 
+• Credit score < 650  
+• EMI burden > 50%  
+• Income unverifiable  
+• Requested loan amount significantly exceeds repayment capacity  
+• Fraud indicators detected  
+• Material inconsistencies in application data  
+• Failed KYC / compliance screening  
+System Decision: REJECT 
+ 
+5.3 Manual Review 
+Application should be routed for human review when: 
+• Credit score falls between 650–749  
+• EMI burden is between 35%–50%  
+• Borderline affordability exists  
+• Exceptional high-value customer case  
+• Conflicting applicant information  
+• Non-standard income structure  
+• High but explainable loan requirement  
+• Partial documentation issues  
+• Fraud suspicion requires analyst validation  
+System Decision: MANUAL REVIEW 
+ 
+6. Example Decision Rules 
+Example 1 
+Applicant: 
+• Credit Score: 790  
+• Monthly Income: ₹100,000  
+• Requested Loan: ₹800,000  
+• Estimated EMI: ₹28,000  
+Assessment: 
+• Strong credit score  
+• EMI ratio = 28%  
+• Loan amount acceptable  
+Decision: 
+APPROVE 
+ 
+Example 2 
+Applicant: 
+• Credit Score: 610  
+• Monthly Income: ₹90,000  
+• Requested Loan: ₹1,500,000  
+Assessment: 
+• Weak credit profile  
+• High requested amount  
+Decision: 
+REJECT 
+ 
+Example 3 
+Applicant: 
+• Credit Score: 700  
+• Monthly Income: ₹120,000  
+• Requested Loan: ₹1,100,000  
+• EMI burden = 42%  
+Assessment: 
+• Moderate credit profile  
+• Borderline affordability  
+Decision: 
+MANUAL REVIEW 
+ 
+7. Fraud & Compliance Controls 
+Mandatory controls before final approval: 
+• Identity verification  
+• Address verification  
+• PAN / tax validation  
+• AML screening  
+• Sanctions screening  
+• Fraud device fingerprinting  
+• Duplicate application detection  
+• Document authenticity checks  
+Failure in mandatory control checks may override automated approval. 
+ 
+8. Exception Handling 
+Exceptions may be permitted only through authorized approval where: 
+• High net worth customer relationship exists  
+• Additional collateral is available  
+• Strong compensating factors exist  
+• Verified exceptional income sources exist  
+All exceptions must include: 
+• Reason code  
+• Approver identity  
+• Timestamp  
+• Audit trail entry  
+ 
+9. Governance 
+Policy owner: 
+Credit Risk / Underwriting Team 
+Review frequency: 
+Quarterly or as business conditions require 
+Triggers for policy review: 
+• Rising default rates  
+• Economic stress  
+• Regulatory change  
+• Portfolio performance deterioration  
+• Fraud trend changes  
+ 
+10. Audit Requirements 
+The system must retain: 
+• Application inputs  
+• Decision outputs  
+• Rule triggered  
+• Override reason  
+• Reviewer notes  
+• Timestamp  
+• User / system identity  
+Retention should align with regulatory requirements. 
+ 
+11. Disclaimer 
+This policy provides recommendation logic for automated decision support. 
+Final lending approval remains subject to: 
+• Institution credit policy  
+• Regulatory obligations  
+• Human oversight where required  
+• Risk appetite controls 
+ 

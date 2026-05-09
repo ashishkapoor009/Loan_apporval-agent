@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Approval AI</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-left-color: #3b82f6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+
+        function App() {
+            const [input, setInput] = useState("Hi, I want a $800000 loan. My monthly income is $100000 and credit score is 790.");
+            const [loading, setLoading] = useState(false);
+            const [result, setResult] = useState(null);
+            const [pausedState, setPausedState] = useState(null);
+
+            const handleEvaluate = async () => {
+                setLoading(true);
+                setResult(null);
+                setPausedState(null);
+                try {
+                    const res = await fetch("/api/evaluate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ message: input })
+                    });
+                    const data = await res.json();
+                    if (data.status === "PAUSED") {
+                        setPausedState(data);
+                    } else {
+                        setResult(data);
+                    }
+                } catch (e) {
+                    alert("Error: " + e.message);
+                }
+                setLoading(false);
+            };
+
+            const handleOverride = async (decision) => {
+                setLoading(true);
+                try {
+                    const res = await fetch("/api/override", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ thread_id: pausedState.thread_id, decision })
+                    });
+                    const data = await res.json();
+                    setPausedState(null);
+                    setResult(data);
+                } catch (e) {
+                    alert("Error: " + e.message);
+                }
+                setLoading(false);
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center p-4">
+                    <div className="glass p-8 rounded-2xl w-full max-w-2xl shadow-2xl">
+                        <h1 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                            AI Loan Underwriter
+                        </h1>
+                        <p className="text-slate-400 mb-6">Automated decisioning with Human-in-the-Loop</p>
+
+                        <textarea
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-4 text-white focus:ring-2 focus:ring-blue-500 outline-none transition"
+                            rows="4"
+                            value={input}
+                            onChange={e => setInput(e.target.value)}
+                            placeholder="Enter applicant details..."
+                        ></textarea>
+
+                        <button 
+                            onClick={handleEvaluate} 
+                            disabled={loading}
+                            className="mt-4 w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg transition shadow-lg flex justify-center items-center"
+                        >
+                            {loading ? <div className="spinner"></div> : "Evaluate Loan"}
+                        </button>
+
+                        {pausedState && (
+                            <div className="mt-6 p-6 bg-amber-900/30 border border-amber-500/50 rounded-lg">
+                                <div className="flex items-center gap-3 text-amber-400 mb-2">
+                                    <span className="text-xl">⚠️</span>
+                                    <h2 className="font-bold text-lg">Manual Review Required</h2>
+                                </div>
+                                <p className="text-amber-200 mb-4">{pausedState.reasoning}</p>
+                                <div className="flex gap-4">
+                                    <button onClick={() => handleOverride("APPROVE")} className="flex-1 bg-green-600 hover:bg-green-500 py-2 rounded font-semibold transition">APPROVE</button>
+                                    <button onClick={() => handleOverride("REJECT")} className="flex-1 bg-red-600 hover:bg-red-500 py-2 rounded font-semibold transition">REJECT</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {result && (
+                            <div className={`mt-6 p-6 border rounded-lg ${result.decision.includes('APPROVE') ? 'bg-green-900/30 border-green-500/50 text-green-200' : 'bg-red-900/30 border-red-500/50 text-red-200'}`}>
+                                <h2 className="font-bold text-lg mb-2">Final Decision: {result.decision}</h2>
+                                <p className="whitespace-pre-wrap">{result.result}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById("root"));
+        root.render(<App />);
+    </script>
+</body>
+</html>
