@@ -20,6 +20,103 @@
     <script type="text/babel">
         const { useState } = React;
 
+        // Mirrors the rules in loan_agent.py (from "Loan Approval Policy.pdf", sections 4-5)
+        const POLICY_RULES = [
+            {
+                key: "approve",
+                title: "Approved",
+                icon: "✅",
+                when: "ALL of these are true",
+                style: "border-green-500/40 bg-green-900/20",
+                titleStyle: "text-green-300",
+                rules: ["Credit score is 750 or above", "EMI burden is 35% or less of monthly income"],
+            },
+            {
+                key: "review",
+                title: "Human-in-the-Loop Review",
+                icon: "⚠️",
+                when: "ANY of these is true (and no reject rule applies)",
+                style: "border-amber-500/40 bg-amber-900/20",
+                titleStyle: "text-amber-300",
+                rules: ["Credit score is 650 to 749", "EMI burden is over 35% and up to 50%"],
+                note: "An underwriter then chooses APPROVE or REJECT.",
+            },
+            {
+                key: "reject",
+                title: "Rejected",
+                icon: "⛔",
+                when: "ANY of these is true",
+                style: "border-red-500/40 bg-red-900/20",
+                titleStyle: "text-red-300",
+                rules: [
+                    "Credit score is below 650",
+                    "EMI burden is over 50%",
+                    "Invalid input: credit score outside 300 to 900, or income / loan amount of 0 or less",
+                ],
+            },
+        ];
+
+        const EXAMPLES = [
+            { label: "Approve", text: "Hi, I want a $800000 loan. My monthly income is $100000 and credit score is 790." },
+            { label: "Manual review", text: "I need a $1100000 loan. My monthly income is $120000, credit score is 700." },
+            { label: "Reject", text: "Hi, I want a $1500000 loan. My monthly income is $90000, credit score is 610." },
+        ];
+
+        // Renders **bold** segments from the agent's markdown-style output
+        function RichText({ text }) {
+            return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+                part.startsWith("**") && part.endsWith("**")
+                    ? <strong key={i}>{part.slice(2, -2)}</strong>
+                    : <span key={i}>{part}</span>
+            );
+        }
+
+        function PolicyGuide({ onExample }) {
+            return (
+                <aside className="glass p-6 rounded-2xl w-full lg:max-w-md shadow-2xl">
+                    <h2 className="text-xl font-bold mb-1 text-slate-100">Policy Guide</h2>
+                    <p className="text-slate-400 text-sm mb-4">How the underwriter decides, per the Loan Approval Policy.</p>
+
+                    <div className="space-y-3">
+                        {POLICY_RULES.map(r => (
+                            <div key={r.key} className={`p-4 border rounded-lg ${r.style}`}>
+                                <h3 className={`font-semibold ${r.titleStyle}`}>{r.icon} {r.title}</h3>
+                                <p className="text-xs uppercase tracking-wide text-slate-400 mt-1 mb-2">{r.when}</p>
+                                <ul className="list-disc list-inside text-sm text-slate-200 space-y-1">
+                                    {r.rules.map(rule => <li key={rule}>{rule}</li>)}
+                                </ul>
+                                {r.note && <p className="text-xs text-slate-400 mt-2">{r.note}</p>}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-4 p-4 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-slate-300">
+                        <h3 className="font-semibold text-slate-100 mb-1">How EMI burden is calculated</h3>
+                        <p>Estimated EMI = 2% of the loan amount per month (about a 5-year term).</p>
+                        <p className="mt-1">EMI burden = EMI ÷ monthly income × 100.</p>
+                        <p className="mt-1 text-slate-400">Example: $800,000 loan → $16,000 EMI. With $100,000 monthly income, the EMI burden is 16%.</p>
+                    </div>
+
+                    <div className="mt-4 text-sm text-slate-300">
+                        <h3 className="font-semibold text-slate-100 mb-1">What to include in your request</h3>
+                        <p>Loan amount, monthly income (annual is fine, it's divided by 12) and credit score. If any of these is missing, the result is INCOMPLETE_DATA.</p>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                            {EXAMPLES.map(ex => (
+                                <button key={ex.label} onClick={() => onExample(ex.text)}
+                                    className="text-xs px-3 py-1.5 rounded-full border border-slate-600 hover:border-blue-400 hover:text-blue-300 transition">
+                                    Try: {ex.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <p className="mt-4 text-xs text-slate-500">
+                        The policy also requires KYC, income verification, fraud and compliance checks, and a loan amount within about 12x monthly income. Those checks happen outside this tool.
+                    </p>
+                </aside>
+            );
+        }
+
         function App() {
             const [input, setInput] = useState("Hi, I want a $800000 loan. My monthly income is $100000 and credit score is 790.");
             const [loading, setLoading] = useState(false);
@@ -66,7 +163,7 @@
             };
 
             return (
-                <div className="min-h-screen flex items-center justify-center p-4">
+                <div className="min-h-screen flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 p-4 lg:py-12">
                     <div className="glass p-8 rounded-2xl w-full max-w-2xl shadow-2xl">
                         <h1 className="text-3xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
                             AI Loan Underwriter
@@ -106,10 +203,11 @@
                         {result && (
                             <div className={`mt-6 p-6 border rounded-lg ${result.decision.includes('APPROVE') ? 'bg-green-900/30 border-green-500/50 text-green-200' : 'bg-red-900/30 border-red-500/50 text-red-200'}`}>
                                 <h2 className="font-bold text-lg mb-2">Final Decision: {result.decision}</h2>
-                                <p className="whitespace-pre-wrap">{result.result}</p>
+                                <p className="whitespace-pre-wrap"><RichText text={result.result} /></p>
                             </div>
                         )}
                     </div>
+                    <PolicyGuide onExample={text => { setInput(text); setResult(null); setPausedState(null); }} />
                 </div>
             );
         }
