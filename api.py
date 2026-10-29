@@ -20,6 +20,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def no_cache_html(request, call_next):
+    # Make browsers revalidate the page so frontend updates show up without a hard refresh
+    response = await call_next(request)
+    if response.headers.get("content-type", "").startswith("text/html"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 agent = create_loan_workflow()
 
 class EvaluateRequest(BaseModel):
